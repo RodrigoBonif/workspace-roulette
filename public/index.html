@@ -89,12 +89,12 @@
   }
   .ch.on { box-shadow: inset 0 3px 8px rgba(0,0,0,.85), 0 0 0 3px var(--brass), 0 0 16px rgba(200,160,76,.45); }
   .lb {
-    position: absolute; inset: 0; display: grid; place-items: center; padding: 9%;
+    position: absolute; inset: 0; display: grid; place-items: center; padding: 0;
     text-align: center; font-family: var(--heading); font-weight: 800; line-height: 1;
-    color: var(--muted); transition: color .35s; will-change: transform;
+    color: #d3d9de; transition: color .35s; will-change: transform;
   }
   .ch.on .lb { color: var(--brass); }
-  .lb span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; overflow-wrap: anywhere; }
+  .lb span { display: block; overflow: hidden; line-height: 1.02; overflow-wrap: normal; word-break: normal; hyphens: none; }
   .hub {
     position: absolute; left: 50%; top: 50%; width: 15%; height: 15%; transform: translate(-50%, -50%);
     border-radius: 50%; background: radial-gradient(circle at 35% 30%, #7a8793, #2a3138);
@@ -267,7 +267,6 @@
 (() => {
   const API = '/api/roulette';
   const SS_KEY = 'roleta:nome';
-  const SPIN_MS = 4200;
   const RADIUS = 0.36; // raio das câmaras em relação ao tamanho do tambor
 
   const $ = (id) => document.getElementById(id);
@@ -279,10 +278,6 @@
   let busy = false;
   let loaded = false;
   let anims = [];
-  let raf = 0;
-  let lastIdx = null;
-  let lastAng = null;
-  let lastTick = 0;
 
   /* ---------- Nome do usuário (sessionStorage) ---------- */
   const getUser = () => { try { return sessionStorage.getItem(SS_KEY) || ''; } catch { return ''; } };
@@ -334,7 +329,8 @@
   }
 
   /* ---------- Tambor ---------- */
-  const desired = () => (state.current < 0 ? 0 : -state.current * step);
+  // Sem ninguém na vez (-1), o tambor fica um cartucho "antes" do primeiro nome.
+  const desired = () => -state.current * step;
 
   // Posiciona o tambor sem animação; os nomes recebem a rotação inversa para ficarem em pé.
   function setRot(deg) {
@@ -355,7 +351,6 @@
     const m = Math.max(n, 6);          // sempre ao menos 6 câmaras, como um tambor de verdade
     step = 360 / m;
     const k = Math.min(0.3, 2 * RADIUS * Math.sin(Math.PI / m) * 0.86);
-    const fs = k * 0.15;               // fonte proporcional ao tamanho da câmara
     cyl.innerHTML = '';
     for (let i = 0; i < m; i++) {
       const a = i * step;
@@ -368,7 +363,6 @@
       if (i < n) {
         const lb = document.createElement('div');
         lb.className = 'lb';
-        lb.style.fontSize = `max(8px, calc(var(--size) * ${fs}))`;
         const sp = document.createElement('span');
         sp.textContent = state.names[i];
         lb.title = state.names[i];
@@ -382,64 +376,64 @@
     cyl.appendChild(hub);
     setRot(desired());
     markCurrent();
+    requestAnimationFrame(fitLabels);
   }
 
-  /* ---------- Animação do giro ---------- */
+  // Ajusta a fonte de cada nome ao tamanho real da câmara: o maior tamanho que cabe sem cortar.
+  function fitLabels() {
+    cyl.querySelectorAll('.lb').forEach((lb) => {
+      const D = lb.parentElement.offsetWidth;
+      if (!D) return;
+      const sp = lb.firstElementChild;
+      sp.style.overflowWrap = 'normal';
+      sp.style.maxWidth = `${D * 0.9}px`;
+      sp.style.maxHeight = `${D * 0.7}px`;
+      let fs = Math.min(D * 0.3, 28);
+      sp.style.fontSize = `${fs}px`;
+      for (let i = 0; i < 40 && fs * 0.94 >= 9 && (sp.scrollWidth > sp.clientWidth + 1 || sp.scrollHeight > sp.clientHeight + 1); i++) {
+        fs *= 0.94;
+        sp.style.fontSize = `${fs}px`;
+      }
+      if (sp.scrollWidth > sp.clientWidth + 1) sp.style.overflowWrap = 'anywhere'; // palavra gigante: quebra só como último recurso
+    });
+  }
+  let fitRaf = 0;
+  new ResizeObserver(() => { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitLabels); }).observe(cyl);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitLabels);
+
+  /* ---------- Animação do giro: avança um cartucho ---------- */
+  let flickTimer = 0;
+
   function stopAnims() {
     anims.forEach((a) => { try { a.cancel(); } catch {} });
     anims = [];
-    cancelAnimationFrame(raf);
-    cyl.style.filter = '';
+    clearTimeout(flickTimer);
   }
 
-  // O marcador dá um "tranco" cada vez que uma câmara passa por ele.
+  // Tranco do marcador quando o tambor trava no cartucho.
   function flick() {
     $('marker').animate(
       [
         { transform: 'translateX(-50%) rotate(0deg)' },
-        { transform: 'translateX(-50%) rotate(10deg)' },
+        { transform: 'translateX(-50%) rotate(-11deg)' },
         { transform: 'translateX(-50%) rotate(0deg)' },
       ],
-      { duration: 80, easing: 'ease-out' }
+      { duration: 130, easing: 'ease-out' }
     );
-  }
-
-  function watchTicks() {
-    const m = getComputedStyle(cyl).transform.match(/matrix\(([^)]+)\)/);
-    if (m) {
-      const [a, b] = m[1].split(',').map(Number);
-      const ang = (((Math.atan2(b, a) * 180) / Math.PI) % 360 + 360) % 360;
-      const idx = Math.floor(ang / step);
-      const now = performance.now();
-      if (lastAng !== null) {
-        const speed = Math.abs(((ang - lastAng + 540) % 360) - 180); // graus por quadro
-        const blur = Math.min(1.6, speed / 12);
-        cyl.style.filter = blur > 0.2 ? `blur(${blur.toFixed(2)}px)` : '';
-      }
-      lastAng = ang;
-      if (lastIdx !== null && idx !== lastIdx && now - lastTick > 55) {
-        flick();
-        lastTick = now;
-      }
-      lastIdx = idx;
-    }
-    raf = requestAnimationFrame(watchTicks);
   }
 
   function settle() {
     anims = [];
-    cancelAnimationFrame(raf);
-    cyl.style.filter = '';
     busy = false;
     markCurrent();
-    renderTexts(); // o resultado só aparece quando o tambor para
+    renderTexts(); // o nome novo só aparece quando o tambor trava
     $('nowName').animate(
       [
-        { transform: 'scale(.9)', opacity: 0.3 },
-        { transform: 'scale(1.07)', opacity: 1, offset: 0.6 },
+        { transform: 'scale(.92)', opacity: 0.4 },
+        { transform: 'scale(1.06)', opacity: 1, offset: 0.6 },
         { transform: 'scale(1)', opacity: 1 },
       ],
-      { duration: 350, easing: 'ease-out' }
+      { duration: 380, easing: 'ease-out' }
     );
   }
 
@@ -447,22 +441,25 @@
     stopAnims();
     cyl.querySelectorAll('.ch.on').forEach((c) => c.classList.remove('on'));
     const target = desired();
-    const delta = (((rot - target) % 360) + 360) % 360; // sempre no mesmo sentido
+    let delta = (((rot - target) % 360) + 360) % 360; // sempre no mesmo sentido
+    if (delta < 0.01) delta = 360;                     // um único nome: dá a volta completa
+    const steps = Math.max(1, Math.round(delta / step));
+    const dur = Math.min(2400, 850 + 220 * (steps - 1));
     const from = rot;
-    const to = rot - delta - 360 * 4;                   // 4 voltas completas + o trecho até o nome
+    const to = rot - delta;
+    const over = Math.min(5, step * 0.1);              // quanto passa do ponto antes de travar
     busy = true;
     renderControls();
 
-    setRot(to); // valor final fica gravado; a animação abaixo cuida do caminho até ele
-    // recuo rápido, arrancada, passa um pouco do ponto, volta e trava
+    setRot(to); // valor final gravado; a animação cuida do caminho
     const frames = (fn) => [
-      { transform: fn(from),      easing: 'ease-out',                 offset: 0 },
-      { transform: fn(from + 16), easing: 'cubic-bezier(.5,0,.1,1)',  offset: 0.09 },
-      { transform: fn(to - 7),    easing: 'ease-in-out',              offset: 0.84 },
-      { transform: fn(to + 1.8),  easing: 'ease-out',                 offset: 0.93 },
-      { transform: fn(to),                                            offset: 1 },
+      { transform: fn(from),            easing: 'ease-out',                offset: 0 },
+      { transform: fn(from + 2.5),      easing: 'cubic-bezier(.35,0,.15,1)', offset: 0.08 },
+      { transform: fn(to - over),       easing: 'ease-in-out',             offset: 0.66 },
+      { transform: fn(to + over * 0.4), easing: 'ease-out',                offset: 0.82 },
+      { transform: fn(to),                                                  offset: 1 },
     ];
-    const opts = { duration: SPIN_MS, fill: 'none' };
+    const opts = { duration: dur, fill: 'none' };
     const main = cyl.animate(frames((d) => `rotate(${d}deg)`), opts);
     anims.push(main);
     cyl.querySelectorAll('.ch').forEach((ch) => {
@@ -472,10 +469,7 @@
       anims.push(lb.animate(frames((d) => `rotate(${-(a + d)}deg)`), opts));
     });
     main.onfinish = settle;
-    lastIdx = null;
-    lastAng = null;
-    lastTick = 0;
-    raf = requestAnimationFrame(watchTicks);
+    flickTimer = setTimeout(flick, dur * 0.66);
   }
 
   /* ---------- Render ---------- */
