@@ -19,54 +19,59 @@
     --text: #e9e6df;
     --muted: #9aa3ab;
     --primer: #c4553d;
-    --size: clamp(220px, min(84vw, 56dvh), 400px);
-    --spin-time: 3.4s;
     --heading: 'Big Shoulders Display', 'Arial Narrow', Impact, sans-serif;
     --body: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
   }
-  * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font: 16px/1.4 var(--body);
-    min-height: 100dvh;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; overflow: hidden; background: var(--bg); }
+  body { color: var(--text); font: 16px/1.4 var(--body); -webkit-text-size-adjust: 100%; }
   button, input { font: inherit; color: inherit; }
   button { cursor: pointer; }
   :focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 16px; }
+  /* A página ocupa exatamente a altura disponível: nada de rolagem da página. */
+  .wrap {
+    height: 100vh; height: 100dvh;
+    max-width: 1180px; margin: 0 auto;
+    padding: max(clamp(8px, 2dvh, 16px), env(safe-area-inset-top)) max(clamp(10px, 2vw, 16px), env(safe-area-inset-right))
+             max(clamp(8px, 2dvh, 16px), env(safe-area-inset-bottom)) max(clamp(10px, 2vw, 16px), env(safe-area-inset-left));
+    display: flex; flex-direction: column; gap: clamp(8px, 1.6dvh, 14px);
+  }
 
-  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-  h1 { margin: 0; font: 800 clamp(28px, 7vw, 38px)/1 var(--heading); letter-spacing: .02em; }
+  header { flex: none; display: none; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+  h1 { flex: 1 1 auto; margin: 0; font: 800 clamp(22px, 5.2dvh, 36px)/1 var(--heading); letter-spacing: .02em; white-space: nowrap; }
+  .tabs { flex: 0 1 300px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 3px; }
+  .tab { border: 0; background: transparent; border-radius: 9px; min-height: clamp(34px, 6dvh, 44px); font: 600 clamp(17px, 3dvh, 20px)/1 var(--heading); letter-spacing: .03em; color: var(--muted); }
+  .tab[aria-selected="true"] { background: var(--steel); color: var(--text); }
   .who {
-    background: transparent; border: 1px solid var(--line); border-radius: 999px;
-    padding: 8px 14px; min-height: 40px; color: var(--muted); max-width: 100%;
+    flex: none; background: transparent; border: 1px solid var(--line); border-radius: 999px;
+    padding: 0 14px; min-height: clamp(34px, 6dvh, 40px); color: var(--muted); max-width: 46vw;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .who b { color: var(--text); font-weight: 600; }
 
-  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 4px; margin-bottom: 18px; }
-  .tab { border: 0; background: transparent; border-radius: 9px; min-height: 44px; font: 600 20px/1 var(--heading); letter-spacing: .03em; color: var(--muted); }
-  .tab[aria-selected="true"] { background: var(--steel); color: var(--text); }
+  .view { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
 
-  .layout { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
-  @media (min-width: 900px) {
-    .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 400px); align-items: start; }
-    :root { --size: clamp(280px, min(44vw, 70dvh), 440px); }
+  .layout {
+    flex: 1; min-height: 0; display: grid; gap: clamp(8px, 1.8dvh, 18px);
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr);
   }
-
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
-  .panel h2 { margin: 0 0 12px; font: 800 24px/1 var(--heading); letter-spacing: .03em; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: clamp(8px, 2dvh, 18px) clamp(10px, 2vw, 18px); min-height: 0; overflow: hidden;
+  }
+  .panel h2 { margin: 0 0 clamp(6px, 1.4dvh, 12px); font: 800 clamp(19px, 3.6dvh, 24px)/1 var(--heading); letter-spacing: .03em; }
 
   /* ---------- Tambor ---------- */
-  .stage-panel { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 30px; }
-  .stage { position: relative; width: var(--size); height: var(--size); }
+  .stage-panel { display: flex; flex-direction: column; text-align: center; }
+  .cyl-area { flex: 1 1 0; min-height: 0; min-width: 0; container-type: size; display: grid; place-items: center; }
+  .stage {
+    --size: clamp(90px, 38dvh, 400px);                                  /* alternativa para navegadores antigos */
+    --size: max(90px, min(calc(100cqmin - 24px), 520px));              /* ocupa o espaço livre sem estourar */
+    position: relative; width: var(--size); height: var(--size); margin-top: 10px;
+  }
   .marker {
-    position: absolute; left: 50%; top: -16px; transform: translateX(-50%); z-index: 3;
+    position: absolute; left: 50%; top: -16px; transform: translateX(-50%); transform-origin: 50% 0; z-index: 3;
     width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent;
     border-top: 26px solid var(--brass); filter: drop-shadow(0 2px 2px rgba(0,0,0,.5));
   }
@@ -74,68 +79,68 @@
     position: relative; width: 100%; height: 100%; border-radius: 50%;
     background: radial-gradient(circle at 35% 28%, #5d6872 0%, #333c44 55%, #232a30 100%);
     box-shadow: inset 0 0 0 4px #12161a, inset 0 0 0 8px #4b5660, 0 18px 40px rgba(0,0,0,.45);
-    transition: transform var(--spin-time) cubic-bezier(.12, .62, .08, 1);
     will-change: transform;
   }
   .ch {
     position: absolute; left: 50%; top: 50%; border-radius: 50%;
     background: #101417;
     box-shadow: inset 0 3px 8px rgba(0,0,0,.85), 0 0 0 3px #505c67;
-    transition: box-shadow .3s;
+    transition: box-shadow .35s;
   }
-  .ch.on { box-shadow: inset 0 3px 8px rgba(0,0,0,.85), 0 0 0 3px var(--brass), 0 0 16px rgba(200,160,76,.4); }
+  .ch.on { box-shadow: inset 0 3px 8px rgba(0,0,0,.85), 0 0 0 3px var(--brass), 0 0 16px rgba(200,160,76,.45); }
   .lb {
     position: absolute; inset: 0; display: grid; place-items: center; padding: 9%;
     text-align: center; font-family: var(--heading); font-weight: 800; line-height: 1;
-    color: var(--muted); transition: transform var(--spin-time) cubic-bezier(.12, .62, .08, 1), color .3s;
-    will-change: transform;
+    color: var(--muted); transition: color .35s; will-change: transform;
   }
   .ch.on .lb { color: var(--brass); }
-  .lb span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; word-break: break-word; }
+  .lb span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; overflow-wrap: anywhere; }
   .hub {
     position: absolute; left: 50%; top: 50%; width: 15%; height: 15%; transform: translate(-50%, -50%);
     border-radius: 50%; background: radial-gradient(circle at 35% 30%, #7a8793, #2a3138);
     box-shadow: 0 0 0 4px #14181b, 0 2px 6px rgba(0,0,0,.6);
   }
-  .no-anim, .no-anim * { transition: none !important; }
 
-  .now { margin-top: 26px; width: 100%; }
-  .now small { display: block; color: var(--muted); font-size: 15px; }
+  .controls { flex: none; display: flex; flex-direction: column; align-items: center; }
+  .now { width: 100%; margin-top: clamp(4px, 1.4dvh, 16px); }
+  .now small { display: block; color: var(--muted); font-size: 14px; }
   .now strong {
-    display: block; margin-top: 2px; font: 800 clamp(34px, 9vw, 54px)/1.05 var(--heading);
-    color: var(--brass); word-break: break-word; min-height: 1.05em;
+    display: block; margin-top: 2px; font: 800 clamp(24px, min(9vw, 7.5dvh), 54px)/1.05 var(--heading);
+    color: var(--brass); overflow-wrap: anywhere; min-height: 1.05em;
   }
-  .now .by { margin-top: 6px; min-height: 1.4em; }
+  .now .by { margin-top: 4px; min-height: 1.4em; }
 
   .spin {
-    margin-top: 16px; width: min(100%, 340px); min-height: 56px; border: 0; border-radius: 12px;
-    background: var(--brass); color: #1b1608; font: 800 26px/1 var(--heading); letter-spacing: .05em;
+    margin-top: clamp(6px, 1.6dvh, 14px); width: min(100%, 340px); min-height: clamp(42px, 7.5dvh, 56px);
+    border: 0; border-radius: 12px; background: var(--brass); color: #1b1608;
+    font: 800 clamp(20px, 3.6dvh, 26px)/1 var(--heading); letter-spacing: .05em;
     box-shadow: 0 4px 0 var(--brass-dk);
     transition: transform .08s, box-shadow .08s, opacity .2s;
   }
   .spin:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--brass-dk); }
-  .spin:disabled { opacity: .45; cursor: not-allowed; }
+  .spin:disabled { opacity: .5; cursor: not-allowed; }
 
   /* ---------- Fila ---------- */
-  .queue { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 46dvh; overflow-y: auto; }
-  @media (min-width: 900px) { .queue { max-height: 50dvh; } }
-  .queue li { display: flex; align-items: center; gap: 10px; background: #1a2025; border: 1px solid var(--line); border-radius: 10px; padding: 6px 6px 6px 12px; min-height: 46px; }
+  .queue-panel { display: none; flex-direction: column; }
+  .queue { flex: 1 1 auto; min-height: 0; list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; align-content: start; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--steel) transparent; }
+  .queue li { display: flex; align-items: center; gap: 10px; background: #1a2025; border: 1px solid var(--line); border-radius: 10px; padding: 4px 6px 4px 12px; min-height: 44px; }
   .queue li.cur { border-color: var(--brass); }
   .queue .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; }
   .queue .tag { font-size: 13px; color: var(--muted); white-space: nowrap; }
   .queue li.cur .tag { color: var(--brass); font-weight: 600; }
-  .rm { width: 38px; height: 38px; flex: none; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; }
+  .rm { width: 36px; height: 36px; flex: none; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; }
   .rm:hover { background: var(--steel); color: var(--primer); }
   .empty { color: var(--muted); margin: 4px 0; }
 
-  .add { display: flex; gap: 8px; margin-top: 14px; }
-  .add input { flex: 1; min-width: 0; min-height: 46px; padding: 0 12px; background: #14181b; border: 1px solid var(--line); border-radius: 10px; font-size: 16px; }
-  .btn { min-height: 46px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--steel); font-weight: 600; }
+  .add { flex: none; display: flex; gap: 8px; margin-top: clamp(8px, 1.6dvh, 14px); }
+  .add input { flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; background: #14181b; border: 1px solid var(--line); border-radius: 10px; font-size: 16px; }
+  .btn { min-height: 44px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--steel); font-weight: 600; }
   .btn:hover { background: var(--steel-hi); }
-  .hint { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+  .hint { flex: none; margin: 8px 0 0; font-size: 14px; color: var(--muted); }
 
   /* ---------- Histórico ---------- */
-  .hist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .hist-panel { flex: 1 1 0; display: flex; flex-direction: column; }
+  .hist { flex: 1 1 auto; min-height: 0; list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; align-content: start; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--steel) transparent; }
   .hist li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; background: #1a2025; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
   .hist .tx { overflow-wrap: anywhere; }
   .hist .tx b { font-weight: 600; }
@@ -143,8 +148,32 @@
   .hist time { color: var(--muted); font-size: 14px; white-space: nowrap; }
   @media (max-width: 480px) { .hist li { flex-direction: column; gap: 2px; } }
 
+  /* ---------- Telas pequenas: só o tambor, sem o resto do layout ---------- */
+  @media (max-width: 699px), (max-height: 560px) {
+    .wrap { padding: max(6px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); }
+    #view-wheel[hidden] { display: flex !important; }
+    #view-hist { display: none !important; }
+  }
+  /* pequena, mas larga e baixa: tambor à esquerda, nome e botão à direita */
+  @media (max-width: 699px) and (min-aspect-ratio: 5/4), (max-height: 560px) and (min-aspect-ratio: 5/4) {
+    .stage-panel { flex-direction: row; align-items: stretch; justify-content: center; gap: clamp(10px, 4vw, 40px); }
+    .cyl-area { flex: 0 1 auto; height: 100%; aspect-ratio: 1; }
+    .controls { flex: 0 1 min(44%, 300px); justify-content: center; }
+    .now { margin-top: 0; }
+  }
+  @media (max-height: 420px) {
+    .now .by { display: none; }
+  }
+
+  /* ---------- Tela grande: layout completo ---------- */
+  @media (min-width: 700px) and (min-height: 561px) {
+    header { display: flex; }
+    .layout { grid-template-columns: minmax(0, 1fr) minmax(240px, min(38%, 400px)); }
+    .queue-panel { display: flex; }
+  }
+
   /* ---------- Modal e avisos ---------- */
-  dialog { background: var(--panel); color: var(--text); border: 1px solid #3a444c; border-radius: 14px; padding: 22px; width: min(92vw, 380px); }
+  dialog { background: var(--panel); color: var(--text); border: 1px solid #3a444c; border-radius: 14px; padding: 22px; width: min(92vw, 380px); max-height: 92dvh; overflow: auto; }
   dialog::backdrop { background: rgba(8,10,12,.72); }
   dialog h2 { margin: 0 0 6px; font: 800 28px/1 var(--heading); }
   dialog p { margin: 0 0 14px; color: var(--muted); }
@@ -152,43 +181,42 @@
   .row { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
   .row .btn.primary { background: var(--brass); color: #1b1608; }
 
-  .toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%); max-width: 92vw; background: #3a1f1a; border: 1px solid var(--primer); color: #f3d5cd; border-radius: 10px; padding: 10px 14px; z-index: 10; }
+  .toast { position: fixed; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom)); transform: translateX(-50%); max-width: 92vw; background: #3a1f1a; border: 1px solid var(--primer); color: #f3d5cd; border-radius: 10px; padding: 10px 14px; z-index: 10; }
 
   [hidden] { display: none !important; }
-
-  @media (prefers-reduced-motion: reduce) {
-    :root { --spin-time: .01s; }
-  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>Roleta do time</h1>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-wheel" aria-selected="true" aria-controls="view-wheel">Roleta</button>
+      <button class="tab" role="tab" id="tab-hist" aria-selected="false" aria-controls="view-hist">Histórico</button>
+    </div>
     <button class="who" id="who" type="button" title="Trocar nome">Você: <b id="whoName">-</b></button>
   </header>
 
-  <div class="tabs" role="tablist">
-    <button class="tab" role="tab" id="tab-wheel" aria-selected="true" aria-controls="view-wheel">Roleta</button>
-    <button class="tab" role="tab" id="tab-hist" aria-selected="false" aria-controls="view-hist">Histórico</button>
-  </div>
-
-  <section id="view-wheel" role="tabpanel" aria-labelledby="tab-wheel">
+  <section class="view" id="view-wheel" role="tabpanel" aria-labelledby="tab-wheel">
     <div class="layout">
       <div class="panel stage-panel">
-        <div class="stage">
-          <div class="marker" aria-hidden="true"></div>
-          <div class="cyl" id="cyl" role="img" aria-label="Tambor com os nomes"></div>
+        <div class="cyl-area">
+          <div class="stage">
+            <div class="marker" id="marker" aria-hidden="true"></div>
+            <div class="cyl" id="cyl" role="img" aria-label="Tambor com os nomes"></div>
+          </div>
         </div>
-        <div class="now" aria-live="polite">
-          <small>Vez de</small>
-          <strong id="nowName">-</strong>
-          <small class="by" id="nowBy"></small>
+        <div class="controls">
+          <div class="now" aria-live="polite">
+            <small>Vez de</small>
+            <strong id="nowName">-</strong>
+            <small class="by" id="nowBy"></small>
+          </div>
+          <button class="spin" id="spin" type="button">Girar tambor</button>
         </div>
-        <button class="spin" id="spin" type="button">Girar tambor</button>
       </div>
 
-      <div class="panel">
+      <div class="panel queue-panel">
         <h2>Fila</h2>
         <ul class="queue" id="queue"></ul>
         <p class="empty" id="queueEmpty" hidden>Nenhum nome ainda. Adicione abaixo para começar.</p>
@@ -201,8 +229,8 @@
     </div>
   </section>
 
-  <section id="view-hist" role="tabpanel" aria-labelledby="tab-hist" hidden>
-    <div class="panel">
+  <section class="view" id="view-hist" role="tabpanel" aria-labelledby="tab-hist" hidden>
+    <div class="panel hist-panel">
       <h2>Histórico</h2>
       <ul class="hist" id="hist"></ul>
       <p class="empty" id="histEmpty" hidden>Ninguém girou ainda.</p>
@@ -228,7 +256,8 @@
 (() => {
   const API = '/api/roulette';
   const SS_KEY = 'roleta:nome';
-  const SPIN_MS = matchMedia('(prefers-reduced-motion: reduce)').matches ? 50 : 3500;
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const SPIN_MS = 3800;
   const RADIUS = 0.36; // raio das câmaras em relação ao tamanho do tambor
 
   const $ = (id) => document.getElementById(id);
@@ -239,7 +268,11 @@
   let step = 60;
   let busy = false;
   let loaded = false;
-  let settleTimer = null;
+  let anims = [];
+  let raf = 0;
+  let lastIdx = null;
+  let lastAng = null;
+  let lastTick = 0;
 
   /* ---------- Nome do usuário (sessionStorage) ---------- */
   const getUser = () => { try { return sessionStorage.getItem(SS_KEY) || ''; } catch { return ''; } };
@@ -282,25 +315,24 @@
     if (busy) return;
     try {
       const r = await fetch(API, { cache: 'no-store' });
-      if (!r.ok) throw new Error();
-      apply(await r.json());
-    } catch {
-      if (!loaded) toast('Sem conexão com o servidor. Tentando novamente...');
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `Servidor respondeu com erro ${r.status}.`);
+      apply(j);
+    } catch (e) {
+      if (!loaded) toast(e.message || 'Sem conexão com o servidor.');
     }
   }
 
   /* ---------- Tambor ---------- */
   const desired = () => (state.current < 0 ? 0 : -state.current * step);
 
-  function setRot(deg, animate) {
-    if (!animate) cyl.classList.add('no-anim');
+  // Posiciona o tambor sem animação; os nomes recebem a rotação inversa para ficarem em pé.
+  function setRot(deg) {
     cyl.style.transform = `rotate(${deg}deg)`;
     cyl.querySelectorAll('.ch').forEach((ch) => {
-      const a = Number(ch.dataset.a);
       const lb = ch.firstElementChild;
-      if (lb) lb.style.transform = `rotate(${-(a + deg)}deg)`;
+      if (lb) lb.style.transform = `rotate(${-(Number(ch.dataset.a) + deg)}deg)`;
     });
-    if (!animate) { void cyl.offsetWidth; cyl.classList.remove('no-anim'); }
     rot = deg;
   }
 
@@ -313,7 +345,7 @@
     const m = Math.max(n, 6);          // sempre ao menos 6 câmaras, como um tambor de verdade
     step = 360 / m;
     const k = Math.min(0.3, 2 * RADIUS * Math.sin(Math.PI / m) * 0.86);
-    const fs = k * 0.21; // fonte proporcional ao tamanho da câmara
+    const fs = k * 0.15;               // fonte proporcional ao tamanho da câmara
     cyl.innerHTML = '';
     for (let i = 0; i < m; i++) {
       const a = i * step;
@@ -326,7 +358,7 @@
       if (i < n) {
         const lb = document.createElement('div');
         lb.className = 'lb';
-        lb.style.fontSize = `max(9px, calc(var(--size) * ${fs}))`;
+        lb.style.fontSize = `max(8px, calc(var(--size) * ${fs}))`;
         const sp = document.createElement('span');
         sp.textContent = state.names[i];
         lb.title = state.names[i];
@@ -338,23 +370,110 @@
     const hub = document.createElement('div');
     hub.className = 'hub';
     cyl.appendChild(hub);
-    setRot(desired(), false);
+    setRot(desired());
     markCurrent();
   }
 
+  /* ---------- Animação do giro ---------- */
+  function stopAnims() {
+    anims.forEach((a) => { try { a.cancel(); } catch {} });
+    anims = [];
+    cancelAnimationFrame(raf);
+    cyl.style.filter = '';
+  }
+
+  // O marcador dá um "tranco" cada vez que uma câmara passa por ele.
+  function flick() {
+    $('marker').animate(
+      [
+        { transform: 'translateX(-50%) rotate(0deg)' },
+        { transform: 'translateX(-50%) rotate(-10deg)' },
+        { transform: 'translateX(-50%) rotate(0deg)' },
+      ],
+      { duration: 80, easing: 'ease-out' }
+    );
+  }
+
+  function watchTicks() {
+    const m = getComputedStyle(cyl).transform.match(/matrix\(([^)]+)\)/);
+    if (m) {
+      const [a, b] = m[1].split(',').map(Number);
+      const ang = (((Math.atan2(b, a) * 180) / Math.PI) % 360 + 360) % 360;
+      const idx = Math.floor(ang / step);
+      const now = performance.now();
+      if (lastAng !== null) {
+        const speed = Math.abs(((ang - lastAng + 540) % 360) - 180); // graus por quadro
+        const blur = Math.min(1.6, speed / 12);
+        cyl.style.filter = blur > 0.2 ? `blur(${blur.toFixed(2)}px)` : '';
+      }
+      lastAng = ang;
+      if (lastIdx !== null && idx !== lastIdx && now - lastTick > 55) {
+        flick();
+        lastTick = now;
+      }
+      lastIdx = idx;
+    }
+    raf = requestAnimationFrame(watchTicks);
+  }
+
+  function settle() {
+    anims = [];
+    cancelAnimationFrame(raf);
+    cyl.style.filter = '';
+    busy = false;
+    markCurrent();
+    renderTexts(); // o resultado só aparece quando o tambor para
+    if (!REDUCED) {
+      $('nowName').animate(
+        [
+          { transform: 'scale(.9)', opacity: 0.3 },
+          { transform: 'scale(1.07)', opacity: 1, offset: 0.6 },
+          { transform: 'scale(1)', opacity: 1 },
+        ],
+        { duration: 450, easing: 'ease-out' }
+      );
+    }
+  }
+
   function spinTo() {
-    clearTimeout(settleTimer);
+    stopAnims();
     cyl.querySelectorAll('.ch.on').forEach((c) => c.classList.remove('on'));
     const target = desired();
-    const delta = (((rot - target) % 360) + 360) % 360; // a rotação é sempre no mesmo sentido
+    const delta = (((rot - target) % 360) + 360) % 360; // sempre no mesmo sentido
+    const from = rot;
+    const to = rot - delta - 360 * 3;                   // 3 voltas completas + o trecho até o nome
     busy = true;
-    $('spin').disabled = true;
-    setRot(rot - delta - 720, true);
-    settleTimer = setTimeout(() => {
-      busy = false;
-      markCurrent();
-      renderControls();
-    }, SPIN_MS);
+    renderControls();
+
+    if (REDUCED) {
+      setRot(target);
+      setTimeout(settle, 50);
+      return;
+    }
+
+    setRot(to); // valor final fica gravado; a animação abaixo cuida do caminho até ele
+    // recuo rápido, arrancada, passa um pouco do ponto, volta e trava
+    const frames = (fn) => [
+      { transform: fn(from),      easing: 'ease-out',                 offset: 0 },
+      { transform: fn(from + 16), easing: 'cubic-bezier(.5,0,.1,1)',  offset: 0.09 },
+      { transform: fn(to - 7),    easing: 'ease-in-out',              offset: 0.84 },
+      { transform: fn(to + 1.8),  easing: 'ease-out',                 offset: 0.93 },
+      { transform: fn(to),                                            offset: 1 },
+    ];
+    const opts = { duration: SPIN_MS, fill: 'none' };
+    const main = cyl.animate(frames((d) => `rotate(${d}deg)`), opts);
+    anims.push(main);
+    cyl.querySelectorAll('.ch').forEach((ch) => {
+      const lb = ch.firstElementChild;
+      if (!lb) return;
+      const a = Number(ch.dataset.a);
+      anims.push(lb.animate(frames((d) => `rotate(${-(a + d)}deg)`), opts));
+    });
+    main.onfinish = settle;
+    lastIdx = null;
+    lastAng = null;
+    lastTick = 0;
+    raf = requestAnimationFrame(watchTicks);
   }
 
   /* ---------- Render ---------- */
@@ -411,23 +530,28 @@
   }
 
   function renderControls() {
-    $('spin').disabled = busy || state.names.length === 0;
+    const b = $('spin');
+    b.disabled = busy || state.names.length === 0;
+    b.textContent = busy ? 'Girando…' : 'Girar tambor';
   }
 
   function apply(next) {
     const namesChanged = JSON.stringify(next.names) !== JSON.stringify(state.names);
     const curChanged = next.current !== state.current;
+    const spun = (next.history[0]?.at || 0) !== (state.history[0]?.at || 0);
     const first = !loaded;
     state = next;
     loaded = true;
     if (first || namesChanged) {
-      clearTimeout(settleTimer);
+      stopAnims();
       busy = false;
       build();
-    } else if (curChanged) {
-      spinTo();
+      renderTexts();
+    } else if (curChanged || spun) {
+      spinTo(); // os textos são atualizados quando o tambor para
+    } else {
+      renderTexts();
     }
-    renderTexts();
   }
 
   /* ---------- Ações ---------- */
