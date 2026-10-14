@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roleta do time</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Big+Shoulders+Display:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #171b1f;
+    --panel: #20262c;
+    --line: #2f3841;
+    --steel: #39424b;
+    --steel-hi: #5b6772;
+    --brass: #c8a04c;
+    --brass-dk: #8f6f2a;
+    --text: #e9e6df;
+    --muted: #9aa3ab;
+    --primer: #c4553d;
+    --size: clamp(220px, min(84vw, 56dvh), 400px);
+    --spin-time: 3.4s;
+    --heading: 'Big Shoulders Display', 'Arial Narrow', Impact, sans-serif;
+    --body: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.4 var(--body);
+    min-height: 100dvh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 16px; }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  h1 { margin: 0; font: 800 clamp(28px, 7vw, 38px)/1 var(--heading); letter-spacing: .02em; }
+  .who {
+    background: transparent; border: 1px solid var(--line); border-radius: 999px;
+    padding: 8px 14px; min-height: 40px; color: var(--muted); max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .who b { color: var(--text); font-weight: 600; }
+
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 4px; margin-bottom: 18px; }
+  .tab { border: 0; background: transparent; border-radius: 9px; min-height: 44px; font: 600 20px/1 var(--heading); letter-spacing: .03em; color: var(--muted); }
+  .tab[aria-selected="true"] { background: var(--steel); color: var(--text); }
+
+  .layout { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 400px); align-items: start; }
+    :root { --size: clamp(280px, min(44vw, 70dvh), 440px); }
+  }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  .panel h2 { margin: 0 0 12px; font: 800 24px/1 var(--heading); letter-spacing: .03em; }
+
+  /* ---------- Tambor ---------- */
+  .stage-panel { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 30px; }
+  .stage { position: relative; width: var(--size); height: var(--size); }
+  .marker {
+    position: absolute; left: 50%; top: -16px; transform: translateX(-50%); z-index: 3;
+    width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent;
+    border-top: 26px solid var(--brass); filter: drop-shadow(0 2px 2px rgba(0,0,0,.5));
+  }
+  .cyl {
+    position: relative; width: 100%; height: 100%; border-radius: 50%;
+    background: radial-gradient(circle at 35% 28%, #5d6872 0%, #333c44 55%, #232a30 100%);
+    box-shadow: inset 0 0 0 4px #12161a, inset 0 0 0 8px #4b5660, 0 18px 40px rgba(0,0,0,.45);
+    transition: transform var(--spin-time) cubic-bezier(.12, .62, .08, 1);
+    will-change: transform;
+  }
+  .ch {
+    position: absolute; left: 50%; top: 50%; border-radius: 50%;
+    background: #101417;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,.85), 0 0 0 3px #505c67;
+    transition: box-shadow .3s;
+  }
+  .ch.on { box-shadow: inset 0 3px 8px rgba(0,0,0,.85), 0 0 0 3px var(--brass), 0 0 16px rgba(200,160,76,.4); }
+  .lb {
+    position: absolute; inset: 0; display: grid; place-items: center; padding: 9%;
+    text-align: center; font-family: var(--heading); font-weight: 800; line-height: 1;
+    color: var(--muted); transition: transform var(--spin-time) cubic-bezier(.12, .62, .08, 1), color .3s;
+    will-change: transform;
+  }
+  .ch.on .lb { color: var(--brass); }
+  .lb span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; word-break: break-word; }
+  .hub {
+    position: absolute; left: 50%; top: 50%; width: 15%; height: 15%; transform: translate(-50%, -50%);
+    border-radius: 50%; background: radial-gradient(circle at 35% 30%, #7a8793, #2a3138);
+    box-shadow: 0 0 0 4px #14181b, 0 2px 6px rgba(0,0,0,.6);
+  }
+  .no-anim, .no-anim * { transition: none !important; }
+
+  .now { margin-top: 26px; width: 100%; }
+  .now small { display: block; color: var(--muted); font-size: 15px; }
+  .now strong {
+    display: block; margin-top: 2px; font: 800 clamp(34px, 9vw, 54px)/1.05 var(--heading);
+    color: var(--brass); word-break: break-word; min-height: 1.05em;
+  }
+  .now .by { margin-top: 6px; min-height: 1.4em; }
+
+  .spin {
+    margin-top: 16px; width: min(100%, 340px); min-height: 56px; border: 0; border-radius: 12px;
+    background: var(--brass); color: #1b1608; font: 800 26px/1 var(--heading); letter-spacing: .05em;
+    box-shadow: 0 4px 0 var(--brass-dk);
+    transition: transform .08s, box-shadow .08s, opacity .2s;
+  }
+  .spin:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--brass-dk); }
+  .spin:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ---------- Fila ---------- */
+  .queue { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 46dvh; overflow-y: auto; }
+  @media (min-width: 900px) { .queue { max-height: 50dvh; } }
+  .queue li { display: flex; align-items: center; gap: 10px; background: #1a2025; border: 1px solid var(--line); border-radius: 10px; padding: 6px 6px 6px 12px; min-height: 46px; }
+  .queue li.cur { border-color: var(--brass); }
+  .queue .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .queue .tag { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .queue li.cur .tag { color: var(--brass); font-weight: 600; }
+  .rm { width: 38px; height: 38px; flex: none; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; }
+  .rm:hover { background: var(--steel); color: var(--primer); }
+  .empty { color: var(--muted); margin: 4px 0; }
+
+  .add { display: flex; gap: 8px; margin-top: 14px; }
+  .add input { flex: 1; min-width: 0; min-height: 46px; padding: 0 12px; background: #14181b; border: 1px solid var(--line); border-radius: 10px; font-size: 16px; }
+  .btn { min-height: 46px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--steel); font-weight: 600; }
+  .btn:hover { background: var(--steel-hi); }
+  .hint { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+
+  /* ---------- Histórico ---------- */
+  .hist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .hist li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; background: #1a2025; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .hist .tx { overflow-wrap: anywhere; }
+  .hist .tx b { font-weight: 600; }
+  .hist .tx .to { color: var(--brass); }
+  .hist time { color: var(--muted); font-size: 14px; white-space: nowrap; }
+  @media (max-width: 480px) { .hist li { flex-direction: column; gap: 2px; } }
+
+  /* ---------- Modal e avisos ---------- */
+  dialog { background: var(--panel); color: var(--text); border: 1px solid #3a444c; border-radius: 14px; padding: 22px; width: min(92vw, 380px); }
+  dialog::backdrop { background: rgba(8,10,12,.72); }
+  dialog h2 { margin: 0 0 6px; font: 800 28px/1 var(--heading); }
+  dialog p { margin: 0 0 14px; color: var(--muted); }
+  dialog input { width: 100%; min-height: 48px; padding: 0 12px; background: #14181b; border: 1px solid var(--line); border-radius: 10px; font-size: 16px; }
+  .row { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+  .row .btn.primary { background: var(--brass); color: #1b1608; }
+
+  .toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%); max-width: 92vw; background: #3a1f1a; border: 1px solid var(--primer); color: #f3d5cd; border-radius: 10px; padding: 10px 14px; z-index: 10; }
+
+  [hidden] { display: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root { --spin-time: .01s; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Roleta do time</h1>
+    <button class="who" id="who" type="button" title="Trocar nome">Você: <b id="whoName">-</b></button>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-wheel" aria-selected="true" aria-controls="view-wheel">Roleta</button>
+    <button class="tab" role="tab" id="tab-hist" aria-selected="false" aria-controls="view-hist">Histórico</button>
+  </div>
+
+  <section id="view-wheel" role="tabpanel" aria-labelledby="tab-wheel">
+    <div class="layout">
+      <div class="panel stage-panel">
+        <div class="stage">
+          <div class="marker" aria-hidden="true"></div>
+          <div class="cyl" id="cyl" role="img" aria-label="Tambor com os nomes"></div>
+        </div>
+        <div class="now" aria-live="polite">
+          <small>Vez de</small>
+          <strong id="nowName">-</strong>
+          <small class="by" id="nowBy"></small>
+        </div>
+        <button class="spin" id="spin" type="button">Girar tambor</button>
+      </div>
+
+      <div class="panel">
+        <h2>Fila</h2>
+        <ul class="queue" id="queue"></ul>
+        <p class="empty" id="queueEmpty" hidden>Nenhum nome ainda. Adicione abaixo para começar.</p>
+        <form class="add" id="addForm" autocomplete="off">
+          <input id="addInput" type="text" maxlength="200" placeholder="Nome" aria-label="Novo nome" enterkeyhint="done">
+          <button class="btn" type="submit">Adicionar</button>
+        </form>
+        <p class="hint">Para incluir vários de uma vez, separe por vírgula.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-hist" role="tabpanel" aria-labelledby="tab-hist" hidden>
+    <div class="panel">
+      <h2>Histórico</h2>
+      <ul class="hist" id="hist"></ul>
+      <p class="empty" id="histEmpty" hidden>Ninguém girou ainda.</p>
+    </div>
+  </section>
+</div>
+
+<dialog id="nameDialog">
+  <form method="dialog" id="nameForm">
+    <h2>Quem é você?</h2>
+    <p>Seu nome aparece no histórico quando você girar o tambor.</p>
+    <input id="nameInput" type="text" maxlength="30" placeholder="Seu nome" aria-label="Seu nome" autocomplete="off" required>
+    <div class="row">
+      <button class="btn" type="button" id="nameCancel" hidden>Cancelar</button>
+      <button class="btn primary" type="submit">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="alert" hidden></div>
+
+<script>
+(() => {
+  const API = '/api/roulette';
+  const SS_KEY = 'roleta:nome';
+  const SPIN_MS = matchMedia('(prefers-reduced-motion: reduce)').matches ? 50 : 3500;
+  const RADIUS = 0.36; // raio das câmaras em relação ao tamanho do tambor
+
+  const $ = (id) => document.getElementById(id);
+  const cyl = $('cyl');
+
+  let state = { names: [], current: -1, history: [] };
+  let rot = 0;
+  let step = 60;
+  let busy = false;
+  let loaded = false;
+  let settleTimer = null;
+
+  /* ---------- Nome do usuário (sessionStorage) ---------- */
+  const getUser = () => { try { return sessionStorage.getItem(SS_KEY) || ''; } catch { return ''; } };
+  const setUser = (n) => { try { sessionStorage.setItem(SS_KEY, n); } catch {} };
+
+  const dlg = $('nameDialog');
+  function renderUser() { $('whoName').textContent = getUser() || '-'; }
+  function askName(canCancel) {
+    $('nameInput').value = getUser();
+    $('nameCancel').hidden = !canCancel;
+    dlg.dataset.required = canCancel ? '' : '1';
+    if (!dlg.open) dlg.showModal();
+    $('nameInput').focus();
+  }
+  dlg.addEventListener('cancel', (e) => { if (dlg.dataset.required) e.preventDefault(); });
+  $('nameCancel').addEventListener('click', () => dlg.close());
+  $('nameForm').addEventListener('submit', () => {
+    const v = $('nameInput').value.replace(/\s+/g, ' ').trim();
+    if (!v) return;
+    setUser(v.slice(0, 30));
+    renderUser();
+  });
+  $('who').addEventListener('click', () => askName(true));
+
+  /* ---------- API ---------- */
+  let toastTimer;
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => (t.hidden = true), 4000);
+  }
+  async function post(body) {
+    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'Não foi possível concluir.');
+    return j;
+  }
+  async function refresh() {
+    if (busy) return;
+    try {
+      const r = await fetch(API, { cache: 'no-store' });
+      if (!r.ok) throw new Error();
+      apply(await r.json());
+    } catch {
+      if (!loaded) toast('Sem conexão com o servidor. Tentando novamente...');
+    }
+  }
+
+  /* ---------- Tambor ---------- */
+  const desired = () => (state.current < 0 ? 0 : -state.current * step);
+
+  function setRot(deg, animate) {
+    if (!animate) cyl.classList.add('no-anim');
+    cyl.style.transform = `rotate(${deg}deg)`;
+    cyl.querySelectorAll('.ch').forEach((ch) => {
+      const a = Number(ch.dataset.a);
+      const lb = ch.firstElementChild;
+      if (lb) lb.style.transform = `rotate(${-(a + deg)}deg)`;
+    });
+    if (!animate) { void cyl.offsetWidth; cyl.classList.remove('no-anim'); }
+    rot = deg;
+  }
+
+  function markCurrent() {
+    cyl.querySelectorAll('.ch').forEach((ch, i) => ch.classList.toggle('on', i === state.current));
+  }
+
+  function build() {
+    const n = state.names.length;
+    const m = Math.max(n, 6);          // sempre ao menos 6 câmaras, como um tambor de verdade
+    step = 360 / m;
+    const k = Math.min(0.3, 2 * RADIUS * Math.sin(Math.PI / m) * 0.86);
+    const fs = k * 0.21; // fonte proporcional ao tamanho da câmara
+    cyl.innerHTML = '';
+    for (let i = 0; i < m; i++) {
+      const a = i * step;
+      const ch = document.createElement('div');
+      ch.className = 'ch';
+      ch.dataset.a = a;
+      ch.style.width = ch.style.height = `calc(var(--size) * ${k})`;
+      ch.style.margin = `calc(var(--size) * ${-k / 2}) 0 0 calc(var(--size) * ${-k / 2})`;
+      ch.style.transform = `rotate(${a}deg) translateY(calc(var(--size) * ${-RADIUS}))`;
+      if (i < n) {
+        const lb = document.createElement('div');
+        lb.className = 'lb';
+        lb.style.fontSize = `max(9px, calc(var(--size) * ${fs}))`;
+        const sp = document.createElement('span');
+        sp.textContent = state.names[i];
+        lb.title = state.names[i];
+        lb.appendChild(sp);
+        ch.appendChild(lb);
+      }
+      cyl.appendChild(ch);
+    }
+    const hub = document.createElement('div');
+    hub.className = 'hub';
+    cyl.appendChild(hub);
+    setRot(desired(), false);
+    markCurrent();
+  }
+
+  function spinTo() {
+    clearTimeout(settleTimer);
+    cyl.querySelectorAll('.ch.on').forEach((c) => c.classList.remove('on'));
+    const target = desired();
+    const delta = (((rot - target) % 360) + 360) % 360; // a rotação é sempre no mesmo sentido
+    busy = true;
+    $('spin').disabled = true;
+    setRot(rot - delta - 720, true);
+    settleTimer = setTimeout(() => {
+      busy = false;
+      markCurrent();
+      renderControls();
+    }, SPIN_MS);
+  }
+
+  /* ---------- Render ---------- */
+  function renderTexts() {
+    const { names, current, history } = state;
+    $('nowName').textContent = current >= 0 && names[current] ? names[current] : names.length ? 'Ninguém ainda' : '-';
+    const last = history[0];
+    $('nowBy').textContent = last ? `${last.by} girou por último` : names.length ? 'Gire o tambor para começar' : '';
+
+    // fila: começa em quem está na vez
+    const q = $('queue');
+    q.innerHTML = '';
+    const n = names.length;
+    $('queueEmpty').hidden = n > 0;
+    const start = current >= 0 ? current : 0;
+    for (let o = 0; o < n; o++) {
+      const i = (start + o) % n;
+      const li = document.createElement('li');
+      const isCur = current >= 0 && o === 0;
+      if (isCur) li.className = 'cur';
+      const nm = document.createElement('span');
+      nm.className = 'nm';
+      nm.textContent = names[i];
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      const isNext = current >= 0 ? o === 1 : o === 0;
+      tag.textContent = isCur ? 'Na vez' : isNext ? 'Próximo' : '';
+      const rm = document.createElement('button');
+      rm.type = 'button'; rm.className = 'rm'; rm.textContent = '×';
+      rm.setAttribute('aria-label', `Remover ${names[i]}`);
+      rm.addEventListener('click', () => remove(i));
+      li.append(nm, tag, rm);
+      q.appendChild(li);
+    }
+
+    // histórico
+    const h = $('hist');
+    h.innerHTML = '';
+    $('histEmpty').hidden = history.length > 0;
+    const fmt = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    for (const e of history) {
+      const li = document.createElement('li');
+      const tx = document.createElement('span');
+      tx.className = 'tx';
+      const by = document.createElement('b'); by.textContent = e.by;
+      const to = document.createElement('b'); to.className = 'to'; to.textContent = e.name;
+      tx.append(by, ' passou a vez para ', to);
+      const tm = document.createElement('time');
+      tm.textContent = fmt.format(new Date(e.at));
+      li.append(tx, tm);
+      h.appendChild(li);
+    }
+    renderControls();
+  }
+
+  function renderControls() {
+    $('spin').disabled = busy || state.names.length === 0;
+  }
+
+  function apply(next) {
+    const namesChanged = JSON.stringify(next.names) !== JSON.stringify(state.names);
+    const curChanged = next.current !== state.current;
+    const first = !loaded;
+    state = next;
+    loaded = true;
+    if (first || namesChanged) {
+      clearTimeout(settleTimer);
+      busy = false;
+      build();
+    } else if (curChanged) {
+      spinTo();
+    }
+    renderTexts();
+  }
+
+  /* ---------- Ações ---------- */
+  async function remove(i) {
+    try { apply(await post({ action: 'remove', index: i })); }
+    catch (e) { toast(e.message); }
+  }
+
+  $('addForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const names = $('addInput').value.split(/[,\n;]/).map((s) => s.trim()).filter(Boolean);
+    if (!names.length) return;
+    try {
+      apply(await post({ action: 'add', names }));
+      $('addInput').value = '';
+    } catch (e) { toast(e.message); }
+  });
+
+  $('spin').addEventListener('click', async () => {
+    if (busy) return;
+    if (!getUser()) { askName(false); return; }
+    $('spin').disabled = true;
+    try {
+      apply(await post({ action: 'spin', by: getUser() }));
+    } catch (e) {
+      toast(e.message);
+      renderControls();
+    }
+  });
+
+  /* ---------- Abas ---------- */
+  function showTab(which) {
+    const wheel = which === 'wheel';
+    $('view-wheel').hidden = !wheel;
+    $('view-hist').hidden = wheel;
+    $('tab-wheel').setAttribute('aria-selected', wheel);
+    $('tab-hist').setAttribute('aria-selected', !wheel);
+  }
+  $('tab-wheel').addEventListener('click', () => showTab('wheel'));
+  $('tab-hist').addEventListener('click', () => showTab('hist'));
+
+  /* ---------- Início ---------- */
+  renderUser();
+  if (!getUser()) askName(false);
+  refresh();
+  setInterval(refresh, 4000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+})();
+</script>
+</body>
+</html>
